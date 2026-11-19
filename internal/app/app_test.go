@@ -7,7 +7,7 @@ import (
 )
 
 func TestView(t *testing.T) {
-	a := New()
+	a := NewWithStore(nil)
 	tt := ui.NewTester(a.View, 760, 520)
 	if err := tt.Click("计数器"); err != nil {
 		t.Fatal(err)
@@ -34,7 +34,7 @@ func TestView(t *testing.T) {
 }
 
 func TestSidebarCanResize(t *testing.T) {
-	a := New()
+	a := NewWithStore(nil)
 	tt := ui.NewTester(a.View, 760, 520)
 
 	dragSplitter := func(delta float32) {
@@ -62,8 +62,19 @@ func TestSidebarCanResize(t *testing.T) {
 	}
 }
 
+func TestSettingsNavigation(t *testing.T) {
+	a := NewWithStore(nil)
+	tt := ui.NewTester(a.View, 760, 520)
+	if err := tt.Click("设置"); err != nil {
+		t.Fatal(err)
+	}
+	if a.page != "settings" || !tt.HasText("应用偏好会保存在本机 SQLite 数据库中。") {
+		t.Errorf("settings page %q, texts %q after navigation", a.page, tt.Texts())
+	}
+}
+
 func TestMobileNavigation(t *testing.T) {
-	a := New()
+	a := NewWithStore(nil)
 	tt := ui.NewTester(a.View, 390, 844)
 	if _, ok := tt.AccessByRole(ui.RoleSplitter, ""); ok {
 		t.Fatal("mobile layout should not show a sidebar splitter")

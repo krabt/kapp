@@ -35,6 +35,17 @@ tasks:
     cmds:
       - go tool mygo build -platform android/arm64
 
+  db-generate:
+    desc: Generate GORM models and query code from Goose migrations
+    cmds:
+      - go run ./cmd/mtool -d build/kapp.db -t up
+      - go run ./cmd/mtool -d build/kapp.db -g
+
+  db-migrations:
+    desc: List embedded Goose migration files
+    cmds:
+      - ls internal/data/sql/*.sql
+
   release:
     desc: Build production artifacts for all supported platforms
     env:
