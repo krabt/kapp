@@ -1,0 +1,31 @@
+version: '3'
+
+vars:
+  RELEASE_PLATFORMS: darwin/universal,windows/amd64,windows/arm64,linux/amd64,linux/arm64,web
+
+tasks:
+  dev:
+    desc: Run the app with live reload
+    cmds:
+      - go tool mygo dev
+
+  build:
+    desc: Build a production app for the current host
+    env:
+      GOFLAGS: -trimpath
+      MYGO_LDFLAGS: "-s -w"
+    vars:
+      GOOS:
+        sh: go env GOOS
+      GOARCH:
+        sh: go env GOARCH
+    cmds:
+      - go tool mygo build -platform {{.GOOS}}/{{.GOARCH}}
+
+  release:
+    desc: Build production artifacts for all supported platforms
+    env:
+      GOFLAGS: -trimpath
+      MYGO_LDFLAGS: "-s -w"
+    cmds:
+      - go tool mygo build -platform {{.RELEASE_PLATFORMS}}

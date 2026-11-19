@@ -1,0 +1,6 @@
+{
+  "name": "kapp",
+  "identifier": "com.example.kapp",
+  "version": "0.1.0",
+  "out": "build"
+}
