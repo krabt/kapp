@@ -8,7 +8,6 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	_ "modernc.org/sqlite"
 )
 
 type Store struct {

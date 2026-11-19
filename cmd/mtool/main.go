@@ -9,8 +9,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	_ "modernc.org/sqlite"
 )
 
 var (

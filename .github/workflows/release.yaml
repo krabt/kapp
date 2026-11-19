@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - dev
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: ${{ startsWith(github.ref, 'refs/tags/v') && 'Tagged release' || 'Beta release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Install Task
+        uses: go-task/setup-task@v1
+
+      - name: Set release metadata
+        id: release
+        env:
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          if [[ "$IS_TAG" == "true" ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            timestamp=$(date -u +'%Y%m%d%H%M%S')
+            echo "tag=beta-${timestamp}" >> "$GITHUB_OUTPUT"
+            echo "name=Beta ${timestamp}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tests
+        run: CGO_ENABLED=0 go test ./...
+
+      - name: Build release artifacts
+        env:
+          GOFLAGS: -trimpath
+          MYGO_LDFLAGS: "-s -w"
+        run: task release
+
+      - name: Generate release checksums
+        run: |
+          cd dist
+          rm -f checksums.txt
+          sha256sum * > checksums.txt
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: ${{ steps.release.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ steps.release.outputs.prerelease }}
+          make_latest: ${{ !startsWith(github.ref, 'refs/heads/dev') }}
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

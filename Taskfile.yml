@@ -1,7 +1,9 @@
 version: '3'
 
 vars:
-  RELEASE_PLATFORMS: darwin/universal,windows/amd64,windows/arm64,linux/amd64,linux/arm64,android,web
+  RELEASE_PLATFORMS: darwin/universal,darwin/arm64,darwin/amd64,windows/amd64,windows/arm64,linux/amd64,linux/arm64,android/arm64
+  RELEASE_VERSION:
+    sh: awk -F '"' '/"version"[[:space:]]*:/ { print $4; exit }' mygo.json
 
 tasks:
   dev:
@@ -52,4 +54,22 @@ tasks:
       GOFLAGS: -trimpath
       MYGO_LDFLAGS: "-s -w"
     cmds:
+      - rm -rf build dist
+      - mkdir -p build dist
       - go tool mygo build -platform {{.RELEASE_PLATFORMS}}
+      - tar -czf dist/kapp-{{.RELEASE_VERSION}}-darwin-universal.tar.gz -C build/darwin-universal kapp.app
+      - tar -czf dist/kapp-{{.RELEASE_VERSION}}-darwin-arm64.tar.gz -C build/darwin-arm64 kapp.app
+      - tar -czf dist/kapp-{{.RELEASE_VERSION}}-darwin-amd64.tar.gz -C build/darwin-amd64 kapp.app
+      - cp build/darwin-universal/kapp-{{.RELEASE_VERSION}}.dmg dist/kapp-{{.RELEASE_VERSION}}-darwin-universal.dmg
+      - cp build/darwin-arm64/kapp-{{.RELEASE_VERSION}}-arm64.dmg dist/kapp-{{.RELEASE_VERSION}}-darwin-arm64.dmg
+      - cp build/darwin-amd64/kapp-{{.RELEASE_VERSION}}-amd64.dmg dist/kapp-{{.RELEASE_VERSION}}-darwin-amd64.dmg
+      - cp build/linux-amd64/kapp_{{.RELEASE_VERSION}}_amd64.deb dist/kapp-{{.RELEASE_VERSION}}-linux-amd64.deb
+      - cp build/linux-amd64/kapp-{{.RELEASE_VERSION}}-1.x86_64.rpm dist/kapp-{{.RELEASE_VERSION}}-linux-amd64.rpm
+      - cp build/linux-amd64/kapp-{{.RELEASE_VERSION}}-linux-amd64.tar.gz dist/kapp-{{.RELEASE_VERSION}}-linux-amd64.tar.gz
+      - cp build/linux-arm64/kapp_{{.RELEASE_VERSION}}_arm64.deb dist/kapp-{{.RELEASE_VERSION}}-linux-arm64.deb
+      - cp build/linux-arm64/kapp-{{.RELEASE_VERSION}}-1.aarch64.rpm dist/kapp-{{.RELEASE_VERSION}}-linux-arm64.rpm
+      - cp build/linux-arm64/kapp-{{.RELEASE_VERSION}}-linux-arm64.tar.gz dist/kapp-{{.RELEASE_VERSION}}-linux-arm64.tar.gz
+      - cp build/windows-amd64/kapp.exe dist/kapp-{{.RELEASE_VERSION}}-windows-amd64.exe
+      - cp build/windows-arm64/kapp.exe dist/kapp-{{.RELEASE_VERSION}}-windows-arm64.exe
+      - cp build/android/kapp-{{.RELEASE_VERSION}}.apk dist/kapp-{{.RELEASE_VERSION}}-android-arm64.apk
+      - cp build/android/kapp-{{.RELEASE_VERSION}}.aab dist/kapp-{{.RELEASE_VERSION}}-android-arm64.aab
