@@ -2,5 +2,9 @@
   "name": "kapp",
   "identifier": "com.example.kapp",
   "version": "0.1.0",
-  "out": "build"
+  "out": "build",
+  "android": {
+    "minSdk": 34,
+    "splash": "#0AA6A6"
+  }
 }

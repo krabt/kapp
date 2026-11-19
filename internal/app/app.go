@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/mobile"
 )
 
 const (
@@ -11,10 +12,16 @@ const (
 	minSidebarWidth     float32 = 60
 )
 
+var (
+	overviewIcon = ui.MustParseSVG([]byte(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>`))
+	counterIcon = ui.MustParseSVG([]byte(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>`))
+)
+
 type App struct {
 	name         string
 	count        int
 	page         string
+	mobilePage   int
 	sidebarWidth float32
 }
 
@@ -23,6 +30,15 @@ func New() *App {
 }
 
 func (a *App) View(c *ui.Context) {
+	width, _ := c.Size()
+	if width < 720 {
+		a.mobileView(c)
+		return
+	}
+	a.desktopView(c)
+}
+
+func (a *App) desktopView(c *ui.Context) {
 	split := ui.Split(c, &a.sidebarWidth, func() {
 		a.sidebarView(c)
 	}, func() {
@@ -30,6 +46,34 @@ func (a *App) View(c *ui.Context) {
 	}).SplitReset(defaultSidebarWidth).Fill()
 	if split.Changed() && a.sidebarWidth < minSidebarWidth {
 		a.sidebarWidth = minSidebarWidth
+	}
+}
+
+func (a *App) mobileView(c *ui.Context) {
+	if a.page == "counter" {
+		a.mobilePage = 1
+	} else {
+		a.mobilePage = 0
+	}
+	ui.Column(c).Fill().Children(func() {
+		a.mainView(c).Grow(1)
+		bar := mobile.BottomBar(c, &a.mobilePage,
+			mobile.BarButton{Label: "概览", Icon: mobileIcon(overviewIcon)},
+			mobile.BarButton{Label: "计数器", Icon: mobileIcon(counterIcon)},
+		)
+		if bar.Changed() {
+			if a.mobilePage == 1 {
+				a.page = "counter"
+			} else {
+				a.page = "home"
+			}
+		}
+	})
+}
+
+func mobileIcon(icon *ui.SVG) func(*ui.Painter, ui.Rect, ui.Color) {
+	return func(p *ui.Painter, bounds ui.Rect, color ui.Color) {
+		p.Icon(icon, bounds, color)
 	}
 }
 
@@ -42,9 +86,14 @@ func (a *App) sidebarView(c *ui.Context) {
 	}).Fill()
 }
 
-func (a *App) mainView(c *ui.Context) {
+func (a *App) mainView(c *ui.Context) ui.Element {
 	t := c.Theme()
-	ui.Column(c).Fill().Gap(16).Padding(28).Children(func() {
+	width, _ := c.Size()
+	padding := float32(28)
+	if width < 720 {
+		padding = 20
+	}
+	return ui.Column(c).Grow(1).Gap(16).Padding(padding).Children(func() {
 		switch a.page {
 		case "counter":
 			ui.Text(c, "计数器").FontSize(26).Bold()

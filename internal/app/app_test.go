@@ -61,3 +61,17 @@ func TestSidebarCanResize(t *testing.T) {
 		t.Fatalf("sidebar width %v after dragging below minimum %v from %v", a.sidebarWidth, minSidebarWidth, widerWidth)
 	}
 }
+
+func TestMobileNavigation(t *testing.T) {
+	a := New()
+	tt := ui.NewTester(a.View, 390, 844)
+	if _, ok := tt.AccessByRole(ui.RoleSplitter, ""); ok {
+		t.Fatal("mobile layout should not show a sidebar splitter")
+	}
+	if err := tt.Click("计数器"); err != nil {
+		t.Fatal(err)
+	}
+	if a.page != "counter" || !tt.HasText("使用按钮调整当前数值。") {
+		t.Errorf("mobile page %q, texts %q after navigation", a.page, tt.Texts())
+	}
+}
